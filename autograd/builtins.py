@@ -10,7 +10,9 @@ from .extend import (
     primitive,
     vspace,
 )
+from .core import defjac
 from .util import subvals
+import numpy as np
 
 isinstance_ = isinstance
 isinstance = notrace_primitive(isinstance)
@@ -32,6 +34,18 @@ def grad_container_take(ans, A, idx):
 
 defvjp(container_take, grad_container_take)
 defjvp(container_take, "same")
+
+# 定义 container_take 的雅可比规则
+def jac_container_take(ans, A, idx):
+    ret_jac = []
+    for i, a in enumerate(A):
+        if i == idx:
+            ret_jac.append(np.eye(ans.size, a.size, dtype=ans.dtype).reshape(ans.shape + a.shape))
+        else:
+            ret_jac.append(np.zeros((ans.size, a.size), dtype=ans.dtype).reshape(ans.shape + a.shape))
+    return np.hstack(ret_jac)
+
+defjac(container_take, jac_container_take)
 
 
 class SequenceBox(Box):
